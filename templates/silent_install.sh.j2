@@ -42,7 +42,7 @@ echo "."
 echo "Register localhost"
 ${PLATFORM_ADMIN}/bin/platform-admin.sh add-hosts \
     --platform-name "${PLATFORM}" \
-    --hosts localhost
+    --hosts ${CONTROLLER_HOST}
 
 # Add the ES hosts
 echo "Register ES hosts"

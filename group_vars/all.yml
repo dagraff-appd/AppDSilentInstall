@@ -5,6 +5,7 @@ appd_tmp_directory: "{{ appd_install_directory }}/tmp"
 
 required_packages:
   - curl
+  - ncurses
   - net-tools
   - fontconfig
   - libaio

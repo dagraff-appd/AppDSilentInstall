@@ -13,7 +13,7 @@ INSTALL_DIR={{ appd_install_directory }}/platform/product
 TMP_DIR={{ appd_install_directory }}/tmp
 CREDENTIAL_NAME="AppDynamics"
 CONTROLLER_HOST={{ hostvars['primary_controller'].ansible_host }}
-ES_HOSTS=({%for host in groups['events_service'] %}}{{ host['ansible_host'] }} {%endfor%})
+ES_HOSTS=({%for host in groups['events_service'] %}}{{ hostvars[host].ansible_host }} {%endfor%})
 
 echo "."
 

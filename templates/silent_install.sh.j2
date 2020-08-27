@@ -38,7 +38,7 @@ ${PLATFORM_ADMIN}/bin/platform-admin.sh add-credential \
     --ssh-key-file "${HOME}/.ssh/id_rsa"
 echo "."
 
-# Add host localhost
+# Add host controller host
 {% if hostvars['primary_controller'].ansible_host == hostvars['ec'].ansible_host %}}
 echo "Register localhost"
 ${PLATFORM_ADMIN}/bin/platform-admin.sh add-hosts \

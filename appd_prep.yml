@@ -67,7 +67,7 @@
     - name: Add Authorized Key
       authorized_key:
         user: "{{ appd_user }}"
-        key: "{{ hostvars['ec']['ec_ssh_key']['content'] | b64decode }}"
+        key: "{{ hostvars['ec']['ssh_public_key']['content'] | b64decode }}"
         state: present
     - name: Slurp primary_controller SSH public key
       slurp:

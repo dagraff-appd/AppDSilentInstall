@@ -58,7 +58,7 @@ ${PLATFORM_ADMIN}/bin/platform-admin.sh submit-job \
     --service controller \
     --job install \
     --args \
-	    controllerProfile=demo \
+	    controllerProfile={{ controller_profile }} \
 	    controllerPrimaryHost=${CONTROLLER_HOST} \
     	controllerAdminUsername={{ controller_admin_username }} \
     	controllerAdminPassword={{ controller_admin_password }} \
@@ -73,7 +73,7 @@ ${PLATFORM_ADMIN}/bin/platform-admin.sh submit-job \
     --service events-service \
     --job install \
     --args \
-        profile=dev \
+        profile={{ events_service_profile }} \
         jvmTempDir=${TMP_DIR} \
         ${ES_HOSTS[@]/#/serviceActionHost=}
 echo "."

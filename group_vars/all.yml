@@ -3,6 +3,9 @@ appd_group: appd
 appd_install_directory: /opt/appdynamics
 appd_tmp_directory: "{{ appd_install_directory }}/tmp"
 
+controller_profile: demo
+events_service_profile: dev
+
 required_packages:
   - curl
   - ncurses

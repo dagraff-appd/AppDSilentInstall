@@ -39,7 +39,7 @@ ${PLATFORM_ADMIN}/bin/platform-admin.sh add-credential \
 echo "."
 
 # Add host controller host
-echo "Register localhost"
+echo "Register Controller Host"
 {% if hostvars['primary_controller'].ansible_host == hostvars['ec'].ansible_host %}}
 ${PLATFORM_ADMIN}/bin/platform-admin.sh add-hosts \
     --platform-name "${PLATFORM}" \

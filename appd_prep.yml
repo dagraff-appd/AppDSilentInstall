@@ -1,0 +1,80 @@
+# code: language=Ansible
+---
+- name: Establish AppDynamics User
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create AppDynamics Group
+      group:
+        name: "{{ appd_group }}"
+        system: yes
+        state: present
+    - name: Create AppDynamics User
+      user:
+        name: "{{ appd_user }}"
+        group: "{{ appd_group }}"
+        system: yes
+        generate_ssh_key: yes
+        state: present
+    - name: Create Installation Directory
+      file:
+        path: "{{ item }}"
+        owner: "{{ appd_user }}"
+        group: "{{ appd_group }}"
+        state: directory
+      loop:
+        - "{{ appd_install_directory }}"
+        - "{{ appd_tmp_directory }}"
+    - name: Configure ulimits
+      template:
+        src: etc/security/limits.d/appdynamics.conf.j2
+        dest: /etc/security/limits.d/appdynamics.conf
+    - name: Install Required Packages
+      package:
+        name: "{{ item }}"
+        state: present
+      with_items: "{{ required_packages }}"
+- name: Configure EC host for installation
+  hosts: enterprise_console
+  become: yes
+  tasks:
+    - name: Template Silent Installation Files
+      template:
+        src: "{{ item.name }}.j2"
+        dest: "{{ appd_tmp_directory }}/{{ item.name }}"
+        owner: {{ appd_user }}
+        group: {{ appd_group }}
+        mode: {{ item.mode }}
+      loop:
+        - name: silent.varfile
+          mode: 0644
+        - name: silent_install.sh
+          mode: 0755
+      loop_control:
+        label: "{{ item.name }}"
+    - name: Get appd user's passwd entry
+      getent:
+        database: passwd
+        key: "{{ appd_user }}"
+    - name: Slurp appd user's SSH public key
+      slurp:
+        src: "{{ getent_passwd[ appd_user ][4] }}/.ssh/id_rsa.pub"
+      register: appd_ssh_key
+- name: Configure Controller Hosts for installation
+  hosts: controller
+  become: yes
+  tasks:
+    - name: Add Authorized Key
+      authorized_key:
+        user: "{{ appd_user }}"
+        key: "{{ hostvars['ec']['appd_ssh_key']['content'] | b64decode }}"
+        state: present
+- name: Configure ES Hosts for installation
+  hosts: events_service
+  become: yes
+  tasks:
+    - name: Add Authorized Key
+      authorized_key:
+        user: "{{ appd_user }}"
+        key: "{{ hostvars['ec']['appd_ssh_key']['content'] | b64decode }}"
+        state: present

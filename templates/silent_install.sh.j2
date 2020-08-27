@@ -1,0 +1,79 @@
+#!/bin/sh
+
+# Variables for installation
+echo "Initializing Variables"
+APPD_USER={{ appd_user }}
+
+EC_ADMIN_USER={{ ec_admin_user }}
+EC_ADMIN_PASSWORD={{ ec_admin_password }}
+
+PLATFORM="Silent Install"
+PLATFORM_ADMIN={{ appd_install_directory }}/platform-admin
+INSTALL_DIR={{ appd_install_directory }}/platform/product
+TMP_DIR={{ appd_install_directory }}/tmp
+CREDENTIAL_NAME="AppDynamics"
+CONTROLLER_HOST={{ hostvars['primary_controller'].ansible_host }}
+ES_HOSTS=({%for host in groups['events_service'] %}}{{ host['ansible_host'] }} {%endfor%})
+
+echo "."
+
+# Login to EC
+${PLATFORM_ADMIN}/bin/platform-admin.sh login \
+    --user-name ${EC_ADMIN_USER} \
+    --password ${EC_ADMIN_PASSWORD}
+
+# Create the Platform
+echo "Creating the platform"
+${PLATFORM_ADMIN}/bin/platform-admin.sh create-platform \
+    --name "${PLATFORM}" \
+    --installation-dir ${INSTALL_DIR}
+echo "."
+
+# Add the credential
+echo "Register credential '${CREDENTIAL_NAME}'"
+${PLATFORM_ADMIN}/bin/platform-admin.sh add-credential \
+    --credential-name "${CREDENTIAL_NAME}" \
+    --type ssh \
+    --user-name "${APPD_USER}" \
+    --ssh-key-file "${HOME}/.ssh/id_rsa"
+echo "."
+
+# Add host localhost
+echo "Register localhost"
+${PLATFORM_ADMIN}/bin/platform-admin.sh add-hosts \
+    --platform-name "${PLATFORM}" \
+    --hosts localhost
+
+# Add the ES hosts
+echo "Register ES hosts"
+${PLATFORM_ADMIN}/bin/platform-admin.sh add-hosts \
+    --platform-name "${PLATFORM}" \
+    --credential "${CREDENTIAL_NAME}" \
+    --hosts ${ES_HOSTS[@]}
+
+# Submit the controller install job
+echo "Submit Controller Installation Job"
+${PLATFORM_ADMIN}/bin/platform-admin.sh submit-job \
+    --platform-name "${PLATFORM}" \
+    --service controller \
+    --job install \
+    --args \
+	    controllerProfile=demo \
+	    controllerPrimaryHost=${CONTROLLER_HOST} \
+    	controllerAdminUsername={{ controller_admin_username }} \
+    	controllerAdminPassword={{ controller_admin_password }} \
+    	controllerRootUserPassword={{ controller_root_user_password }} \
+    	newDatabaseRootPassword={{ controller_database_root_password }} \
+    	newDatabaseUserPassword={{ controller_database_user_password }}
+
+# Submit the ES host jobs
+echo "Submit ES Installation Jobs"
+${PLATFORM_ADMIN}/bin/platform-admin.sh submit-job \
+    --platform-name "${PLATFORM}" \
+    --service events-service \
+    --job install \
+    --args \
+        profile=dev \
+        jvmTempDir=${TMP_DIR} \
+        ${ES_HOSTS[@]/#/serviceActionHost=}
+echo "."

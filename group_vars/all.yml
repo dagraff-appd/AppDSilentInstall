@@ -1,0 +1,12 @@
+appd_user: appd
+appd_group: appd
+appd_install_directory: /opt/appdynamics
+appd_tmp_directory: "{{ appd_install_directory }}/tmp"
+
+required_packages:
+  - curl
+  - net-tools
+  - fontconfig
+  - libaio
+  - numactl
+

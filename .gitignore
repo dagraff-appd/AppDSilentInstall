@@ -1,0 +1,4 @@
+/ansible.cfg
+/inventory.yml
+/silent.varfile
+/silent_install.sh

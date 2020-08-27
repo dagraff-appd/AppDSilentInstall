@@ -56,25 +56,47 @@
       getent:
         database: passwd
         key: "{{ appd_user }}"
-    - name: Slurp appd user's SSH public key
+    - name: Slurp appd user's SSH public key on EC Host
       slurp:
         src: "{{ getent_passwd[ appd_user ][4] }}/.ssh/id_rsa.pub"
-      register: appd_ssh_key
-- name: Configure Controller Hosts for installation
+      register: ssh_public_key
+- name: Configure Controller Hosts for installation from EC
   hosts: controller
   become: yes
   tasks:
     - name: Add Authorized Key
       authorized_key:
         user: "{{ appd_user }}"
-        key: "{{ hostvars['ec']['appd_ssh_key']['content'] | b64decode }}"
+        key: "{{ hostvars['ec']['ec_ssh_key']['content'] | b64decode }}"
         state: present
-- name: Configure ES Hosts for installation
+    - name: Slurp primary_controller SSH public key
+      slurp:
+        src: "{{ getent_passwd[ appd_user ][4] }}/.ssh/id_rsa.pub"
+      register: ssh_public_key
+- name: Configure ES Hosts for SSH communication from EC
   hosts: events_service
   become: yes
   tasks:
     - name: Add Authorized Key
       authorized_key:
         user: "{{ appd_user }}"
-        key: "{{ hostvars['ec']['appd_ssh_key']['content'] | b64decode }}"
+        key: "{{ hostvars['ec']['ssh_public_key']['content'] | b64decode }}"
+        state: present
+- name: Configure Secondary Host for SSH communication from Primary Host
+  hosts: secondary_controller
+  become: yes
+  tasks:
+    - name: Add Authorized Key
+      authorized_key:
+        user: "{{ appd_user }}"
+        key: "{{ hostvars['primary_controller']['ssh_public_key']['content'] | b64decode }}"
+        state: present
+- name: Configure Primary Host for SSH communication from Secondary Host
+  hosts: primary_controller
+  become: yes
+  tasks:
+    - name: Add Authorized Key
+      authorized_key:
+        user: "{{ appd_user }}"
+        key: "{{ hostvars['secondary_controller']['ssh_public_key']['content'] | b64decode }}"
         state: present

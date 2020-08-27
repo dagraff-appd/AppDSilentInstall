@@ -47,9 +47,9 @@
         mode: "{{ item.mode }}"
       loop:
         - name: silent.varfile
-          mode: 0644
+          mode: "0644"
         - name: silent_install.sh
-          mode: 0755
+          mode: "0755"
       loop_control:
         label: "{{ item.name }}"
     - name: Get appd user's passwd entry

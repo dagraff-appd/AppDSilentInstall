@@ -44,7 +44,7 @@
         dest: "{{ appd_tmp_directory }}/{{ item.name }}"
         owner: "{{ appd_user }}"
         group: "{{ appd_group }}"
-        mode: {{ item.mode }}
+        mode: "{{ item.mode }}"
       loop:
         - name: silent.varfile
           mode: 0644

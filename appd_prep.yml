@@ -16,6 +16,14 @@
         system: yes
         generate_ssh_key: yes
         state: present
+    - name: Get appd user's passwd entry
+      getent:
+        database: passwd
+        key: "{{ appd_user }}"
+    - name: Slurp appd user's SSH public key on EC Host
+      slurp:
+        src: "{{ getent_passwd[ appd_user ][4] }}/.ssh/id_rsa.pub"
+      register: ssh_public_key
     - name: Create Installation Directory
       file:
         path: "{{ item }}"
@@ -52,14 +60,6 @@
           mode: "0755"
       loop_control:
         label: "{{ item.name }}"
-    - name: Get appd user's passwd entry
-      getent:
-        database: passwd
-        key: "{{ appd_user }}"
-    - name: Slurp appd user's SSH public key on EC Host
-      slurp:
-        src: "{{ getent_passwd[ appd_user ][4] }}/.ssh/id_rsa.pub"
-      register: ssh_public_key
 - name: Configure Controller Hosts for installation from EC
   hosts: controller
   become: yes
@@ -69,10 +69,6 @@
         user: "{{ appd_user }}"
         key: "{{ hostvars['ec']['ssh_public_key']['content'] | b64decode }}"
         state: present
-    - name: Slurp primary_controller SSH public key
-      slurp:
-        src: "{{ getent_passwd[ appd_user ][4] }}/.ssh/id_rsa.pub"
-      register: ssh_public_key
 - name: Configure ES Hosts for SSH communication from EC
   hosts: events_service
   become: yes

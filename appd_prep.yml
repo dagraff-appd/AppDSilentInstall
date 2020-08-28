@@ -26,7 +26,7 @@
       register: ssh_public_key
     - name: Set appd user's SSH public key as a fact
       set_fact:
-        ssh_public_key: {{ ssh_public_key }}
+        ssh_public_key: "{{ ssh_public_key['content'] | b64decode }}"
     - name: Create Installation Directory
       file:
         path: "{{ item }}"
@@ -70,7 +70,7 @@
     - name: Add Authorized Key
       authorized_key:
         user: "{{ appd_user }}"
-        key: "{{ hostvars['ec']['ssh_public_key']['content'] | b64decode }}"
+        key: "{{ hostvars['ec']['ssh_public_key'] }}"
         state: present
 - name: Configure ES Hosts for SSH communication from EC
   hosts: events_service
@@ -79,7 +79,7 @@
     - name: Add Authorized Key
       authorized_key:
         user: "{{ appd_user }}"
-        key: "{{ hostvars['ec']['ssh_public_key']['content'] | b64decode }}"
+        key: "{{ hostvars['ec']['ssh_public_key'] }}"
         state: present
 - name: Configure Secondary Host for SSH communication from Primary Host
   hosts: secondary_controller
@@ -88,7 +88,7 @@
     - name: Add Authorized Key
       authorized_key:
         user: "{{ appd_user }}"
-        key: "{{ hostvars['primary_controller']['ssh_public_key']['content'] | b64decode }}"
+        key: "{{ hostvars['primary_controller']['ssh_public_key'] }}"
         state: present
 - name: Configure Primary Host for SSH communication from Secondary Host
   hosts: primary_controller
@@ -97,5 +97,5 @@
     - name: Add Authorized Key
       authorized_key:
         user: "{{ appd_user }}"
-        key: "{{ hostvars['secondary_controller']['ssh_public_key']['content'] | b64decode }}"
+        key: "{{ hostvars['secondary_controller']['ssh_public_key'] }}"
         state: present

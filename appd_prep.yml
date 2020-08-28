@@ -45,6 +45,11 @@
         name: "{{ item }}"
         state: present
       with_items: "{{ required_packages }}"
+    - name: Configure /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ hostvars[item]['public_ip'] }}    {{ hostvars[item]['ansible_host'] }}"
+      loop: "{{ groups['all'] }}"
 - name: Configure EC host for installation
   hosts: enterprise_console
   become: yes

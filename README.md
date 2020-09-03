@@ -19,6 +19,11 @@ Prepare an inventory file
         ec_admin_user: 
         ec_admin_password: 
 
+        # May be one of demo (default), small, medium, large
+        # controller_profile: demo
+        # May be one of dev (default), prod
+        # events_service_profile: dev
+
         controller_admin_username: 
         controller_admin_password: 
         controller_root_user_password: 
@@ -33,6 +38,7 @@ Prepare an inventory file
             hosts:
               primary_controller:
                   ansible_host: 
+              # This is optional 
               secondary_controller:
                   ansible_host: 
           events_service:
@@ -43,3 +49,9 @@ Prepare an inventory file
                 ansible_host: 
               events_service3:
                 ansible_host: 
+
+## After execution
+
+The playbook will generate two template files in addition to configuring the system and users for installation.
+The 'silent.varfile' can be used with the command ./platform...sh -q -varfile silent.varfile to install the EC
+The 'silent_install.sh' will execute the installation of the controller and events service nodes.

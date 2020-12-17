@@ -50,6 +50,13 @@
         path: /etc/hosts
         line: "{{ hostvars[item]['public_ip'] }}    {{ hostvars[item]['ansible_host'] }}"
       loop: "{{ groups['all'] }}"
+      when: configure_etc_hosts | default(False)
+    - name: Disable FirewallD
+      service:
+        name: firewalld
+        state: stopped
+        enabled: no
+      when: disable_firewalld | default(False) and ansible_facts['os_family'] == "RHEL"
 - name: Configure EC host for installation
   hosts: enterprise_console
   become: yes

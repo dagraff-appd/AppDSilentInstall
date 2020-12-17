@@ -7,13 +7,24 @@ APPD_USER={{ appd_user }}
 EC_ADMIN_USER={{ ec_admin_user }}
 EC_ADMIN_PASSWORD={{ ec_admin_password }}
 
-PLATFORM="Silent Install"
+PLATFORM="{{ platform_name }}"
 PLATFORM_ADMIN={{ appd_install_directory }}/platform/platform-admin
 INSTALL_DIR={{ appd_install_directory }}/platform/product
 TMP_DIR={{ appd_install_directory }}/tmp
-CREDENTIAL_NAME="AppDynamics"
+CREDENTIAL_NAME="{{ credential_name }}"
+
+# Controller
 CONTROLLER_HOST={{ hostvars['primary_controller'].ansible_host }}
-ES_HOSTS=({%for host in groups['events_service'] %}{{ hostvars[host].ansible_host }} {%endfor%})
+CONTROLLER_PORT={{ controller_port | default('8090') }}
+{%- if controller_vip is defined %}
+CONTROLLER_VIP="{{ controller_vip }}"
+{%- endif %}
+
+# Events Service
+EVENTS_SERVICE_HOSTS=({%for host in groups['events_service'] %}{{ hostvars[host].ansible_host }} {%endfor%})
+{%- if events_service_vip is defined %}
+EVENTS_SERVICE_VIP="{{ events_service_vip }}"
+{%- endif %}
 
 echo "."
 
@@ -56,7 +67,7 @@ echo "Register ES hosts"
 ${PLATFORM_ADMIN}/bin/platform-admin.sh add-hosts \
     --platform-name "${PLATFORM}" \
     --credential "${CREDENTIAL_NAME}" \
-    --hosts ${ES_HOSTS[@]}
+    --hosts ${EVENTS_SERVICE_HOSTS[@]}
 
 # Submit the controller install job
 echo "Submit Controller Installation Job"
@@ -82,5 +93,26 @@ ${PLATFORM_ADMIN}/bin/platform-admin.sh submit-job \
     --args \
         profile={{ events_service_profile }} \
         jvmTempDir=${TMP_DIR} \
-        ${ES_HOSTS[@]/#/serviceActionHost=}
+        ${EVENTS_SERVICE_HOSTS[@]/#/serviceActionHost=}
+
+{%- if controller_vip is defined %}
+# Set deeplink URL
+${PLATFORM_ADMIN}/bin/platform-admin.sh \
+    update-service-configurations \
+    --platform-name "${PLATFORM}" \
+    --service controller \
+    --job update-configs \
+    --args controllerExternalUrl="${CONTROLLER_VIP}"
+{%- endif %}
+
+{%- if events_service_vip is defined and controller_vip is defined %}
+curl -X POST \
+    --user root@system:{{ controller_root_user_password }} \
+    "${CONTROLLER_VIP}/controller/rest/configuration?name=appdynamics.on.premise.event.service.url&value=${EVENTS_SERVICE_VIP}"
+{%- else %}
+curl -X POST \
+    --user root@system:{{ controller_root_user_password }} \
+    "http://${CONTROLLER_HOST}:${CONTROLLER_PORT}/controller/rest/configuration?name=appdynamics.on.premise.event.service.url&value=${EVENTS_SERVICE_VIP}"
+{%- endif %}
+
 echo "."

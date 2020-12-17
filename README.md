@@ -10,6 +10,14 @@ Prepare an inventory file
 
     all:
       vars:
+        # This is the name of the target platform credential vault
+        # It expects you will have a file "{{ vault_id }}-vault.yaml" existing in the root of the project
+        # Otherwise it will attempt to find "default-vault.yaml"
+        # Errors will be ignored
+        # Follow the vault.yaml.template file for sensitive credential storage
+        # 
+        # vault_id: 
+
         # platform_admin_port: 9191
         # platform_admin_database_port: 3377
         platform_admin_database_password: 

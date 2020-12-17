@@ -4,6 +4,9 @@
   hosts: all
   become: yes
   tasks:
+    - name: Load Vaulted Credentials
+      include_vars: "{{ vault_id | default('default') }}-vault.yaml"
+      ignore_errors: yes
     - name: Create AppDynamics Group
       group:
         name: "{{ appd_group }}"

@@ -61,6 +61,7 @@ ${PLATFORM_ADMIN}/bin/platform-admin.sh add-hosts \
     --credential "${CREDENTIAL_NAME}" \
     --hosts ${CONTROLLER_HOST}
 {% endif %}
+echo "."
 
 # Add the ES hosts
 echo "Register ES hosts"
@@ -68,6 +69,7 @@ ${PLATFORM_ADMIN}/bin/platform-admin.sh add-hosts \
     --platform-name "${PLATFORM}" \
     --credential "${CREDENTIAL_NAME}" \
     --hosts ${EVENTS_SERVICE_HOSTS[@]}
+echo "."
 
 # Submit the controller install job
 echo "Submit Controller Installation Job"
@@ -76,13 +78,15 @@ ${PLATFORM_ADMIN}/bin/platform-admin.sh submit-job \
     --service controller \
     --job install \
     --args \
-	    controllerProfile={{ controller_profile }} \
+	    controllerProfile={{ controller_profile | default('demo') }} \
 	    controllerPrimaryHost=${CONTROLLER_HOST} \
+        controllerPrimaryPort=${CONTROLLER_PORT} \
     	controllerAdminUsername={{ controller_admin_username }} \
     	controllerAdminPassword={{ controller_admin_password }} \
     	controllerRootUserPassword={{ controller_root_user_password }} \
     	newDatabaseRootPassword={{ controller_database_root_password }} \
     	newDatabaseUserPassword={{ controller_database_user_password }}
+echo "."
 
 # Submit the ES host jobs
 echo "Submit ES Installation Jobs"
@@ -91,28 +95,35 @@ ${PLATFORM_ADMIN}/bin/platform-admin.sh submit-job \
     --service events-service \
     --job install \
     --args \
-        profile={{ events_service_profile }} \
+        profile={{ events_service_profile | default('Dev') }} \
         jvmTempDir=${TMP_DIR} \
         ${EVENTS_SERVICE_HOSTS[@]/#/serviceActionHost=}
+echo "."
 
 {%- if controller_vip is defined %}
-# Set deeplink URL
+echo "Updating deeplink URL"
 ${PLATFORM_ADMIN}/bin/platform-admin.sh \
     update-service-configurations \
     --platform-name "${PLATFORM}" \
     --service controller \
     --job update-configs \
     --args controllerExternalUrl="${CONTROLLER_VIP}"
+echo "."
 {%- endif %}
 
-{%- if events_service_vip is defined and controller_vip is defined %}
+{%- if events_service_vip is defined %}
+{%- if controller_vip is defined %}
+echo "Updating Events Service URL"
 curl -X POST \
     --user root@system:{{ controller_root_user_password }} \
     "${CONTROLLER_VIP}/controller/rest/configuration?name=appdynamics.on.premise.event.service.url&value=${EVENTS_SERVICE_VIP}"
+echo "."
 {%- else %}
+echo "Updating Events Service URL"
 curl -X POST \
     --user root@system:{{ controller_root_user_password }} \
     "http://${CONTROLLER_HOST}:${CONTROLLER_PORT}/controller/rest/configuration?name=appdynamics.on.premise.event.service.url&value=${EVENTS_SERVICE_VIP}"
+echo "."
+{%- endif %}
 {%- endif %}
 
-echo "."

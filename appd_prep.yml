@@ -78,17 +78,8 @@
           mode: "0755"
       loop_control:
         label: "{{ item.name }}"
-- name: Configure Controller Hosts for installation from EC
-  hosts: controller
-  become: yes
-  tasks:
-    - name: Add Authorized Key
-      authorized_key:
-        user: "{{ appd_user }}"
-        key: "{{ hostvars['ec']['ssh_public_key'] }}"
-        state: present
-- name: Configure ES Hosts for SSH communication from EC
-  hosts: events_service
+- name: Configure Controller and ES Hosts for installation from EC
+  hosts: controller:events_service
   become: yes
   tasks:
     - name: Add Authorized Key
@@ -114,3 +105,5 @@
         user: "{{ appd_user }}"
         key: "{{ hostvars['secondary_controller']['ssh_public_key'] }}"
         state: present
+      when: "'secondary_controller' in hostvars"
+
